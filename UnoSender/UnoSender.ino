@@ -1,65 +1,85 @@
 #include <SoftwareSerial.h>
 
-const byte numChars = 32;
+const byte numChars = 32; //length of maximum serial monitor message
 char receivedChars[numChars]; // Array to store received data
 boolean newData = false;
 String message;
+double messData;
 
+int responseVal;
+int goIter = 0;
 String mess;  // Initialize message variable
+String reset;
 
 SoftwareSerial mySerial(2, 3); // RX, TX
 
-/*MESSAGE CODES:
- * 1. Run component tests
- * 2. 
-*/
 void setup()  
 {
   // Open serial communications with computer and wait for port to open:
   Serial.begin(9600);
 
-  Serial.println("MESSAGE CODES:");
-  Serial.println("");
+  Serial.println("MESSAGE FORMAT:");
+  Serial.println("<MESSAGE>");
 
   // Print a message to the computer through the USB
-  Serial.println("enter message!");
+  Serial.println("enter message in correct format!");
 
   // Open serial communications with the other Arduino board
   mySerial.begin(9600);
-
-
 }
-
 void loop() // run over and over
 {
-  mess = receiveSerialMessage();
+  receiveSerialMessage(); //check for serial monitor messages
+  delay(100); //minimum delay for showNewData to output correctly, if this is not a concern, set the delay to 3.
   showNewData();
-  
+  if(String(receivedChars) == "go servo"){
+    mySerial.write(255);
+    mySerial.write(50);
+    goIter++;
+    //Serial.println(goIter);
+    receivedChars[0] = 'x';
+  }
+  if(String(receivedChars) == "go bot"){
+    mySerial.write(254);
+    mySerial.write(50);
+    goIter++;
+    //Serial.println(goIter);
+    receivedChars[0] = 'x';
+  }
+  xbeeMegaResponse();
 }
 
-String receiveSerialMessage() // ONLY WORKS WITH NEWLINE SELECTED IN SERIAL MONITOR
+void receiveSerialMessage() // ONLY WORKS WITH NEWLINE SELECTED IN SERIAL MONITOR
 {
+  static boolean recvInProgress = false;
   static byte ndx = 0;
-  char endMark = '\n';
+  char startMarker = '<';
+  char endMarker = '>';
   char rc;
-  while(Serial.available() > 0 && newData == false){
-    rc = Serial.read();
+ 
+    while (Serial.available() > 0 && newData == false) {
+        rc = Serial.read();
 
-    if(rc != endMark){
-      receivedChars[ndx] = rc;
-      ndx++;
-      if(ndx >= numChars){
-        ndx = numChars - 1;
-      }
+        if (recvInProgress == true) {
+            if (rc != endMarker) {
+                receivedChars[ndx] = rc;
+                ndx++;
+                if (ndx >= numChars) {
+                    ndx = numChars - 1;
+                }
+            }
+            else {
+                receivedChars[ndx] = '\0'; // terminate the string
+                recvInProgress = false;
+                ndx = 0;
+                newData = true;
+            }
+        }
+
+        else if (rc == startMarker) {
+            recvInProgress = true;
+        }
     }
-    else{
-      receivedChars[ndx] = '\0'; // End the string
-      ndx = 0;
-      newData = true;
-    }
-  }
-  message = String(receivedChars);
-  return message;
 }
 
 void showNewData(){
@@ -67,5 +87,15 @@ void showNewData(){
     Serial.print("Serial Message : ");
     Serial.println(receivedChars);
     newData = false;
+  }
+}
+
+void xbeeMegaResponse(){
+  while(mySerial.available() > 1){
+    if(mySerial.read() != 255){ // check for flag value
+      continue;
+    }
+    responseVal = mySerial.read();
+    Serial.println(responseVal);
   }
 }
