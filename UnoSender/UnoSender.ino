@@ -46,6 +46,24 @@ void loop() // run over and over
     //Serial.println(goIter);
     receivedChars[0] = 'x';
   }
+  if(String(receivedChars) == "go forward and reverse"){
+    mySerial.write(253);
+    goIter++;
+    //Serial.println(goIter);
+    receivedChars[0] = 'x';
+  }
+  if(String(receivedChars) == "go turn"){
+    mySerial.write(252);
+    goIter++;
+    //Serial.println(goIter);
+    receivedChars[0] = 'x';
+  }
+  if(String(receivedChars) == "go manipulators"){
+    mySerial.write(251);
+    goIter++;
+    //Serial.println(goIter);
+    receivedChars[0] = 'x';
+  }
   xbeeMegaResponse();
 }
 
