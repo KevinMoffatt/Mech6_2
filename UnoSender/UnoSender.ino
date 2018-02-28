@@ -15,7 +15,7 @@ SoftwareSerial mySerial(2, 3); // RX, TX
 
 void setup()  
 {
-  // Open serial communications with computer and wait for port to open:
+  // Open serial communications with computer and wait for port to open:wa
   Serial.begin(9600);
 
   Serial.println("MESSAGE FORMAT:");

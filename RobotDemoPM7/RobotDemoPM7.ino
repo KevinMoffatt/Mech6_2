@@ -26,6 +26,10 @@ unsigned char CS4 = 30; // dummy current sensing pin
 unsigned char PWM4 = 46; // motor 4 power
 DualVNH5019MotorShieldMod3 md(INA3, INB3, EN3DIAG3, CS3, PWM3, INA4, INB4, EN4DIAG4, CS4, PWM4); //Use default pins for motor shield 1 and remapped pins for motor shield 2
 
+// configure hall sensor
+int Hall = A0; // hall effect sensor input
+float hallVolt = 2.49;
+
 Servo armServo;
 int initialArmPos = 0;
 int i=0;
@@ -34,7 +38,7 @@ int angle = initialArmPos;
 void setup()  
 {
   // Open serial communications with computer and wait for port to open:
-  // Serial.begin(9600);
+  Serial.begin(9600);
 
   // Serial.println("MESSAGE CODES:");
   // Serial.println("");
@@ -44,18 +48,31 @@ void setup()
 
   // Open serial communications with the other Arduino board
   mySerial.begin(9600);
-  armServo.write(initialArmPos);
-  armServo.attach(servoArmPin);
-  md.init();
+  //armServo.write(initialArmPos);
+  //armServo.attach(servoArmPin);
+  //md.init();
 }
 
 void loop() // run over and over
 {
-  xbeeTestBot();
-  xbeeTestBotStraight();
-  xbeeServo();
-  xbeeTestBotTurns();
-  xbeeTestBotManip();
+  //xbeeTestBot();
+  //xbeeTestBotStraight();
+  //xbeeServo();
+  //xbeeTestBotTurns();
+  //xbeeTestBotManip();
+  hallTest();
+  delay(5000);
+}
+
+void hallTest(){
+  hallVolt = analogRead(Hall); //*(5/1023)
+  if(abs(hallVolt-483) <= 5){ 
+    Serial.println("go");
+  }
+  else{
+    Serial.println("no go");
+  }
+  Serial.println(hallVolt);
 }
 
 void xbeeServo(){
