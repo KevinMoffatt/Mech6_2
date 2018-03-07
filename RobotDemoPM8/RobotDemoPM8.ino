@@ -4,6 +4,29 @@
 #include <SoftwareSerial.h>
 #include <Servo.h>
 
+#include <QTRSensors.h>
+#define NUM_SENSORS 8 //number sensors used
+#define TIMEOUT     2500 //waits 2.5 sec before setting output to low
+
+#define EMITTER_PIN 41 //emitter controlled by pin 2
+
+QTRSensorsRC qtrrc((unsigned char[]) {39, 37, 35, 33, 31, 29, 27, 25}, NUM_SENSORS, TIMEOUT, EMITTER_PIN);
+unsigned int sensorValues[NUM_SENSORS];
+
+int sensorLowVals[NUM_SENSORS] = {340, 340, 240, 240, 400, 300, 450, 600};
+
+int sensorBias[8];
+int sensorNums[NUM_SENSORS] = {1,2,3,4,5,6,7,8};
+
+
+#define RIGHT_IR A1 //Right IR Rangefinder Pin
+#define LEFT_IR A2 //Left IR Rangefinder Pin
+
+double leftIRVolt = 0;
+double rightIRVolt = 0;
+double leftDist = 0;
+double rightDist = 0;
+
 double messData;
 
 //Initialize pins for servo
@@ -26,10 +49,6 @@ unsigned char CS4 = 30; // dummy current sensing pin
 unsigned char PWM4 = 46; // motor 4 power
 DualVNH5019MotorShieldMod3 md(INA3, INB3, EN3DIAG3, CS3, PWM3, INA4, INB4, EN4DIAG4, CS4, PWM4); //Use default pins for motor shield 1 and remapped pins for motor shield 2
 
-// configure hall sensor
-int Hall = A0; // hall effect sensor input
-double hallVolt = 2.49;
-
 Servo armServo;
 int initialArmPos = 0;
 int i=0;
@@ -38,7 +57,7 @@ int angle = initialArmPos;
 void setup()  
 {
   // Open serial communications with computer and wait for port to open:
-  Serial.begin(9600);
+  // Serial.begin(9600);
 
   // Serial.println("MESSAGE CODES:");
   // Serial.println("");
@@ -47,7 +66,7 @@ void setup()
   // Serial.println("enter message!");
 
   // Open serial communications with the other Arduino board
-  mySerial.begin(9600);
+  Serial.begin(9600);
   //armServo.write(initialArmPos);
   //armServo.attach(servoArmPin);
   //md.init();
@@ -60,24 +79,63 @@ void loop() // run over and over
   //xbeeServo();
   //xbeeTestBotTurns();
   //xbeeTestBotManip();
-  hallTest();
-  delay(5000);
+  //lineFollow();
+  rangeTest();
+  
 }
 
-void hallTest(){
-  hallVolt = analogRead(Hall); 
-  //hallVolt = hallVolt*(5.0/1023.0);
-  //double x = hallVolt-2.49;
-  //x=x*100;
-  //x=abs(x);
-  if(abs(hallVolt-510) >= 10){ 
-    Serial.println("go");
+void rangeTest(){
+  //leftIRVolt = analogRead(LEFT_IR)*5.0/1023.0;
+  //leftDist = pow(leftIRVolt,-1.1809)*12.52;
+  rightIRVolt = analogRead(RIGHT_IR)*5.0/1023.0;
+  rightDist = pow(rightIRVolt,-1.1528)*11.71;
+  if(rightDist>10.5){
+    md.setM2Speed(-70);
+    md.setM1Speed(65);
+  //    Serial.println("turn right");
+  }
+  else if(rightDist<9.5){
+    md.setM1Speed(70);
+    md.setM2Speed(-65);
+   //   Serial.println("turn left");
   }
   else{
-    Serial.println("no go");
+    md.setM1Speed(70);
+    md.setM2Speed(-70);
+    //  Serial.println("straight");
   }
-  Serial.println(hallVolt);
-  //Serial.println(x);
+  delay(250);
+}
+
+void lineFollow(){
+  qtrrc.read(sensorValues);
+  //print sensor values from 0 to 25000, 0 means max reflectance (white)
+  //2500 means minimum reflectance (black)
+  for(unsigned char i = 0; i<NUM_SENSORS; i++){
+    sensorBias[i]=sensorValues[i]-sensorLowVals[i]+200;
+  }
+  double lineLoc = 0;
+  int sumVals;
+  double sumMult = 0;
+  for(unsigned char i = 0; i<NUM_SENSORS; i++){
+    sumVals+=sensorBias[i];
+    sumMult+=sensorBias[i]*sensorNums[i];
+  }
+  lineLoc = float(sumMult)/float(sumVals)-4.5;
+  if(lineLoc < -.25){
+    md.setM2Speed(-40);
+    md.setM1Speed(0);
+  }
+  else if(lineLoc > .25){
+    md.setM1Speed(40);
+    md.setM2Speed(0);
+  }
+  else
+  {
+    md.setM1Speed(40);
+    md.setM2Speed(-40);
+  }
+  delay(250);
 }
 
 void xbeeServo(){
