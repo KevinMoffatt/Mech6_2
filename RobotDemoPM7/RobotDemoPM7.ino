@@ -66,18 +66,14 @@ void loop() // run over and over
 
 void hallTest(){
   hallVolt = analogRead(Hall); 
-  //hallVolt = hallVolt*(5.0/1023.0);
-  //double x = hallVolt-2.49;
-  //x=x*100;
-  //x=abs(x);
-  if(abs(hallVolt-510) >= 10){ 
+  hallVolt = hallVolt*(5.0/1023.0);
+  if(2.29-hallVolt >= .25){ 
     Serial.println("go");
   }
   else{
     Serial.println("no go");
   }
   Serial.println(hallVolt);
-  //Serial.println(x);
 }
 
 void xbeeServo(){
