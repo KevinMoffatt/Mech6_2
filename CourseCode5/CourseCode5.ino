@@ -9,7 +9,7 @@
 #define EMITTER_PIN 41 //emitter controlled by pin 2
 QTRSensorsRC qtrrc((unsigned char[]) {39, 37, 35, 33, 31, 29, 27, 25}, NUM_SENSORS, TIMEOUT, EMITTER_PIN);
 unsigned int sensorValues[NUM_SENSORS];
-int sensorLowVals[NUM_SENSORS] = {340, 340, 240, 240, 400, 300, 450, 600};
+int sensorLowVals[NUM_SENSORS] = {300, 244, 244, 244, 196, 300, 196, 300};
 int sensorBias[8];
 int sensorNums[NUM_SENSORS] = {1,2,3,4,5,6,7,8};
 
@@ -92,7 +92,7 @@ double backDistDes = 0;
 int linePass = 0;
 int IRChange = 0;
 int hallCheck = 1;
-int comm = 2;
+int comm = 3;
 int wallStatus = 0;
 int IRCheck = 1;
 
@@ -296,6 +296,7 @@ void lineFollow(){//line following
     sensorBias[i]=sensorValues[i]-sensorLowVals[i]+200;
   }
   double lineLoc = 0;//set initial line location to 0
+  double prevLoc = lineLoc;
   int sumVals;
   double sumMult = 0;
   //find line location
@@ -303,24 +304,21 @@ void lineFollow(){//line following
     sumVals+=sensorBias[i];
     sumMult+=sensorBias[i]*sensorNums[i];
   }
-  lineLoc = float(sumMult)/float(sumVals)-4.5;
+  lineLoc = float(sumMult)/float(sumVals)-4.25;
   Serial.println(lineLoc);
+  double locDiff = abs(lineLoc-prevLoc);
   if(lineLoc < -.25 && lineLoc > -9){ //if the line center is a bit to the left, drive right
     md.setM2Speed(-40);
     md.setM1Speed(0);
-    mySerial.write(255);//confirm communications
-    mySerial.write(1);//communicate the command that is being executed
   }
   else if(lineLoc > .25 && lineLoc < 9){//if the line center is a bit to the right, drive left
     md.setM1Speed(40);
     md.setM2Speed(0);
-    mySerial.write(255);//confirm communications
-    mySerial.write(2);//communicate the command that is being executed
   }
-  else if(lineLoc >=9  || lineLoc <=-9){//if the line center is way off
+  else if(locDiff>.25){//if the line center is way off from where it used to be
     md.setM1Brake(400);
     md.setM2Speed(400);
-    linePass = 1;//set line pass plag to TRUE
+    linePass = 1;//set line pass flag to TRUE
   }
   else 
   {//drive straight if within tolerances
