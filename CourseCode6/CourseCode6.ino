@@ -136,7 +136,7 @@ void loop() // run over and over
         rangeFind();//use rangefinders to navigate the paddleboard
         while (IRChange == 1) { //if there is a significant change in IR sensor reading
           wallDrive();//perform wall lift
-          if (wallStatus) { //if the distance has been detected to be past the wall
+          while (wallStatus) { //if the distance has been detected to be past the wall
             lineFollow();
           }
         }
@@ -149,6 +149,15 @@ void loop() // run over and over
       }
       if (comm == 3) { //line follow command
         lineFollow();
+        while(linePass){
+          railRun();
+        }
+      }
+      if(comm == 4){
+        railRun();
+      }
+      if(comm == 5){
+        wallLift();
       }
     }
   }
@@ -352,7 +361,7 @@ void railRun() { //railrunner code
   railRunCheck = 1;
 }
 
-void walLift(){
+void wallLift(){
   if(linePass == 1){//if we have passed the line
     armServo.write(warpedAngle); //set the arm to an angle to attempt to hook on
     md.setM4Speed(200);//drive jack up
