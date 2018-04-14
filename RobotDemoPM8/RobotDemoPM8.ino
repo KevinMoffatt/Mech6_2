@@ -125,7 +125,7 @@ void lineFollow(){
     sumMult+=sensorBias[i]*sensorNums[i];
   }
   lineLoc = float(sumMult)/float(sumVals)-3.85;
-  Serial.println(lineLoc);
+  //Serial.println(lineLoc);
   if(lineLoc < -.25){
     //md.setM2Speed(-40);
     //md.setM1Speed(0);

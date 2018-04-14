@@ -27,10 +27,11 @@ double messData; //Initialize message variable
 //Initialize pins for servo
 int servoArmPin = 11; // THIS CORRESPONDTDS TO THE SERVO'S ORANGE WIRE
 Servo armServo;
-int initialArmPos = 50; //starting servo angle
+int initialArmPos = 40; //starting servo angle
 int wallAngle = 90; //servo angle for wall
 int railAngle = 130; //servo angle to reach rail runner
 int warpedAngle = 110; //servo angle to hook onto warped wall
+int currentPos = initialArmPos;
 
 // Initialize message variables
 double messDouble;
@@ -96,10 +97,13 @@ double backDistDes = 0;
 int linePass = 0;
 int IRChange = 0;
 int hallCheck = 1;
-int comm = 3;
+int comm = 1;
 int wallStatus = 0;
 int IRCheck = 1;
 int railRunCheck = 0;
+int wallAlign = 0;
+int warpedCheck = 1;
+int wallLifting = 1;
 
 void setup()
 {
@@ -135,15 +139,19 @@ void loop() // run over and over
       if (comm == 1) { //paddle board command
         rangeFind();//use rangefinders to navigate the paddleboard
         while (IRChange == 1) { //if there is a significant change in IR sensor reading
-          wallDrive();//perform wall lift
+          if(wallLifting){
+            wallDrive();//perform wall lift
+          }
           while (wallStatus) { //if the distance has been detected to be past the wall
             lineFollow();
           }
         }
       }
       if (comm == 2) { //wall life command
-        wallDrive();//perform wall lift
-        if (wallStatus) { //if the distance has been detected to be past the wall
+        if(wallLifting){
+          wallDrive();//perform wall lift
+        }
+        while (wallStatus) { //if the distance has been detected to be past the wall
           lineFollow();
         }
       }
@@ -151,13 +159,18 @@ void loop() // run over and over
         lineFollow();
         while(linePass){
           railRun();
+          while(railRunCheck){
+            
+          }
         }
       }
       if(comm == 4){
         railRun();
       }
       if(comm == 5){
-        wallLift();
+        warpedWall();
+        while(warpedCheck){
+        }
       }
     }
   }
@@ -223,48 +236,76 @@ void driveStraight() { //drive with proportional control until wallDist is reach
 }
 
 void wallDrive() { //code to attempt wall lift
-  //drive straight using proportional control
-  t_old = t;
-  leftPos_old = leftPos;
-  rightPos_old = rightPos;
-  leftCounts = leftEnc.read();
-  rightCounts = rightEnc.read();
-  leftPos = leftCounts * 2.0 * PI / (GearRatio * countsPerRev_motor);
-  rightPos = rightCounts * 2.0 * PI / (GearRatio * countsPerRev_motor);
-  t = micros() / 1000000.0;
-  leftLoc = rWheel * leftPos;
-  rightLoc = -rWheel * rightPos;
-  double leftDesired = leftPos + velocityDesired * (t - t_old);
-  double rightDesired = rightPos + velocityDesired * (t - t_old);
-  leftPow = gain * (leftDesired - leftPos);
-  rightPow = gain * (rightDesired - rightPos);
-  md.setM1Speed(rightPow);               //command voltage to motor
-  md.setM2Speed(-leftPow);               //command voltage to motor
-
-  if (wallDist - leftLoc <= 0 && wallDist - rightLoc <= 0) { //if the distance to the wall is reached, attempt to lift it
-    md.setM1Speed(200);               //command voltage to motor
-    md.setM2Speed(-200);               //command voltage to motor
-    armServo.write(50);//raise the arm servo a little to prevent wedging against the ground
-    delay(1000);
-    //reset encoding
-    t = 0;
-    t_old = t;
-    leftCounts = 0;
-    rightCounts  = 0;
-    leftPos = 0;
-    rightPos = 0;
-    leftPos_old = leftPos;
-    rightPos_old = rightPos;
-    //attempt lift
-    armServo.write(wallAngle);
-    delay(2000);
-    armServo.write(wallAngle + 30);
-    //drive through wall
-    md.setM1Speed(50);
-    md.setM2Speed(-45);
-    //set wall completion flag to TRUE
-    wallStatus = 1;
+  lineFollow();
+  if(linePass){
+    linePass = 0;
+    wallAlign = 1;
   }
+  if(wallAlign){
+    md.setM1Speed(60);               //command voltage to motor
+    md.setM2Speed(-55);               //command voltage to motor
+    delay(1000);
+    md.setM1Speed(400);
+    md.setM2Speed(-400);
+    delay(500);
+    currentPos = currentPos+5;
+    armServo.write(currentPos);
+    delay(500);currentPos = initialArmPos+5;
+    armServo.write(currentPos);
+    delay(500);
+    currentPos = currentPos+5;
+    armServo.write(currentPos);
+    delay(500);
+    currentPos = currentPos+5;
+    armServo.write(currentPos);
+    delay(500);
+    currentPos = currentPos+5;
+    armServo.write(currentPos);
+    delay(500);
+    currentPos = currentPos+5;
+    armServo.write(currentPos);
+    delay(500);
+    currentPos = initialArmPos+5;
+    armServo.write(currentPos);
+    delay(500);
+    currentPos = currentPos+5;
+    armServo.write(currentPos);
+    delay(500);
+    currentPos = currentPos+5;
+    armServo.write(currentPos);
+    delay(500);
+    delay(1000);
+    //armServo.write(wallAngle);
+    delay(1000);
+    md.setM1Speed(0);
+    md.setM2Speed(0);
+    wallStatus = 1;
+    wallLifting = 0;
+  }
+//  if (wallDist - leftLoc <= 0 && wallDist - rightLoc <= 0) { //if the distance to the wall is reached, attempt to lift it
+//    md.setM1Speed(200);               //command voltage to motor
+//    md.setM2Speed(-200);               //command voltage to motor
+//    armServo.write(50);//raise the arm servo a little to prevent wedging against the ground
+//    delay(1000);
+//    //reset encoding
+//    t = 0;
+//    t_old = t;
+//    leftCounts = 0;
+//    rightCounts  = 0;
+//    leftPos = 0;
+//    rightPos = 0;
+//    leftPos_old = leftPos;
+//    rightPos_old = rightPos;
+//    //attempt lift
+//    armServo.write(wallAngle);
+//    delay(2000);
+//    armServo.write(wallAngle + 30);
+//    //drive through wall
+//    md.setM1Speed(50);
+//    md.setM2Speed(-45);
+//    //set wall completion flag to TRUE
+//    wallStatus = 1;
+//  }
 }
 
 void rangeFind() { //Paddle board completion
@@ -275,7 +316,7 @@ void rangeFind() { //Paddle board completion
   backIRVolt = (analogRead(BACK_IR)) * 5.0 / 1023.0;
   backDist = pow(backIRVolt, -1.1809) * 12.52;
   //define proportional control
-  double proportion = 25;
+  double proportion = 35;
   if (IRCheck) { // if this is the first reading, set the desired distance to what we read in
     frontDistDes =  frontDist;
     backDistDes =  backDist;
@@ -293,12 +334,13 @@ void rangeFind() { //Paddle board completion
   //Serial.println(rightMotorSpeed);
   md.setM1Speed(rightMotorSpeed);
   Serial.println(abs(frontBackErr));
-  if (abs(frontBackErr) > 5) { // if the difference between the current front distance and the previous one is large, this means a wall is no longer present
+  if (abs(frontBackErr) > 4) { // if the difference between the current front distance and the previous one is large, this means a wall is no longer present
     IRChange = 1; // set paddleboard completion flag to TRUE
+    wallLifting = 1;
     //drive blindly forward
-    md.setM1Speed(50);
-    md.setM2Speed(-45);
-    delay(3000);
+    md.setM1Speed(60);
+    md.setM2Speed(-55);
+    delay(1000);
   }
   frontIRDistOld = frontDist; //set the old front distance
 }
@@ -319,26 +361,26 @@ void lineFollow() { //line following
     sumVals += sensorBias[i];
     sumMult += sensorBias[i] * sensorNums[i];
   }
-  lineLoc = float(sumMult) / float(sumVals) - 4.25;
+  lineLoc = float(sumMult) / float(sumVals) - 3.75;
   Serial.println(lineLoc);
   double locDiff = abs(lineLoc - prevLoc);
   if (lineLoc < -.25 && lineLoc > -9) { //if the line center is a bit to the left, drive right
-    md.setM2Speed(-40);
+    md.setM2Speed(-50);
     md.setM1Speed(0);
   }
   else if (lineLoc > .25 && lineLoc < 9) { //if the line center is a bit to the right, drive left
-    md.setM1Speed(40);
+    md.setM1Speed(50);
     md.setM2Speed(0);
   }
-  else if (sensorBias[0] < 500 && sensorBias[1] < 500 && sensorBias[2] < 500 && sensorBias[3] < 500 && sensorBias[4] < 500 && sensorBias[5] < 500 && sensorBias[6] < 500 && sensorBias[7] < 500) { //if all sensors detect white
+  else if (sensorBias[0] < 1000 && sensorBias[1] < 1000 && sensorBias[2] < 1000 && sensorBias[3] < 1000 && sensorBias[4] < 1000 && sensorBias[5] < 1000 && sensorBias[6] < 1000 && sensorBias[7] < 1000) { //if all sensors detect white
     md.setM1Brake(400);
     md.setM2Speed(400);
     linePass = 1;//set line pass flag to TRUE
   }
   else
   { //drive straight if within tolerances
-    md.setM1Speed(40);
-    md.setM2Speed(-40);
+    md.setM1Speed(50);
+    md.setM2Speed(-50);
   }
   //delay(250);
 }
@@ -361,7 +403,7 @@ void railRun() { //railrunner code
   railRunCheck = 1;
 }
 
-void wallLift(){
+void warpedWall(){
   if(linePass == 1){//if we have passed the line
     armServo.write(warpedAngle); //set the arm to an angle to attempt to hook on
     md.setM4Speed(400);//drive jack up
@@ -369,6 +411,7 @@ void wallLift(){
     md.setM4Speed(-400);//stop the jack
     delay(5000);//retract the jack
     md.setM4Brake(400);
+    warpedCheck = 1;
   }
   else{//follow the line until the wall is reached
     lineFollow();
