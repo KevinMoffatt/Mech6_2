@@ -335,30 +335,31 @@ void lineFollow() { //line following
 }
 
 void railRun() { //railrunner code
-  md.setM4Speed(200);
-  delay(3000);
-  md.setM4Brake(400);
+  md.setM4Speed(200); //raise the jack 
+  delay(3000); //give the jack time to extend
+  md.setM4Brake(400);  //stop the jack
   md.setM4Speed(0);
-  armServo.write(railAngle);
+  armServo.write(railAngle);//move the servo up to hook onto the rail
   delay(1000);
-  md.setM1Speed(50);
+  md.setM1Speed(50);//drive onto the rail
   md.setM2Speed(-45);
   delay(1000);
   md.setM1Speed(0);
   md.setM2Speed(0);
-  md.setM3Speed(150);
+  md.setM3Speed(150);//run rail runner motor
   delay(7000);
+  md.setM3Speed(0);
   railRunCheck = 1;
 }
 
 void walLift(){
-  if(linePass == 1){
-    armServo.write(warpedAngle);
-    md.setM4Speed(200);
-    delay(3000);
-    md.setM4Speed(0);
+  if(linePass == 1){//if we have passed the line
+    armServo.write(warpedAngle); //set the arm to an angle to attempt to hook on
+    md.setM4Speed(200);//drive jack up
+    delay(3000);//give time for the jack to extend
+    md.setM4Speed(0);//stop the jack
   }
-  else{
+  else{//follow the line until the wall is reached
     lineFollow();
   }
 }
