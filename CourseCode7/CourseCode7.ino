@@ -435,7 +435,7 @@ void lineFollow() { //line following
 
 void railRun() { //railrunner code
   md.setM4Speed(400); //raise the jack 
-  delay(3000); //give the jack time to extend
+  delay(8000); //give the jack time to extend
   md.setM4Brake(400);  //stop the jack
   armServo.write(railAngle);//move the servo up to hook onto the rail
   delay(1000);
