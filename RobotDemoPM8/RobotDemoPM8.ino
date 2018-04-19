@@ -13,7 +13,7 @@
 QTRSensorsRC qtrrc((unsigned char[]) {39, 37, 35, 33, 31, 29, 27, 25}, NUM_SENSORS, TIMEOUT, EMITTER_PIN);
 unsigned int sensorValues[NUM_SENSORS];
 
-int sensorLowVals[NUM_SENSORS] = {300, 244, 244, 244, 196, 300, 196, 300};
+int sensorLowVals[NUM_SENSORS] = {800, 540, 484, 450, 390, 300, 490, 590};
 
 int sensorBias[8];
 int sensorNums[NUM_SENSORS] = {1,2,3,4,5,6,7,8};
@@ -113,8 +113,8 @@ void lineFollow(){
   //2500 means minimum reflectance (black)
   for(unsigned char i = 0; i<NUM_SENSORS; i++){
     sensorBias[i]=sensorValues[i]-sensorLowVals[i]+200;
-    Serial.print(sensorValues[i]);
-    Serial.print("\t");
+   // Serial.print(sensorValues[i]);
+   // Serial.print("\t");
   }
   Serial.println();
   double lineLoc = 0;
@@ -125,7 +125,7 @@ void lineFollow(){
     sumMult+=sensorBias[i]*sensorNums[i];
   }
   lineLoc = float(sumMult)/float(sumVals)-3.85;
-  //Serial.println(lineLoc);
+  Serial.println(lineLoc);
   if(lineLoc < -.25){
     //md.setM2Speed(-40);
     //md.setM1Speed(0);
